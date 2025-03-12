@@ -1,11 +1,11 @@
-// Create a search API route
+// Update the search API route to use searchParams() function
 import { NextResponse } from "next/server"
 import { searchBlogPosts } from "@/lib/blog"
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const query = searchParams.get("q") || ""
+    const url = new URL(request.url)
+    const query = url.searchParams.get("q") || ""
 
     if (!query) {
       return NextResponse.json([])

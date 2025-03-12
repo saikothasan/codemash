@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,27 +31,40 @@ export default function SearchPage() {
   const [results, setResults] = useState<Post[]>([])
   const [searched, setSearched] = useState(false)
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Load initial results if query is present
+  useEffect(() => {
+    if (query) {
+      performSearch(query)
+    }
+  }, [query])
 
-    if (!searchQuery.trim()) return
-
+  const performSearch = async (searchTerm: string) => {
     setIsLoading(true)
     setSearched(true)
 
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`)
+      if (!response.ok) {
+        throw new Error("Search request failed")
+      }
       const data = await response.json()
       setResults(data)
-
-      // Update URL with search query
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
     } catch (error) {
       console.error("Search error:", error)
       setResults([])
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!searchQuery.trim()) return
+
+    // Update URL with search query
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+    performSearch(searchQuery)
   }
 
   return (
@@ -85,7 +98,7 @@ export default function SearchPage() {
               ) : results.length > 0 ? (
                 <>
                   <h2 className="text-xl font-semibold mb-4">
-                    Found {results.length} result{results.length !== 1 ? "s" : ""} for "{searchQuery}"
+                    Found {results.length} result{results.length !== 1 ? "s" : ""} for "{query || searchQuery}"
                   </h2>
                   <div className="grid gap-6">
                     {results.map((post) => (
